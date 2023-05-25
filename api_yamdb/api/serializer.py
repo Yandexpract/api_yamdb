@@ -15,14 +15,14 @@ class GenreSerializer(serialiser.ModelSerializer):
 class TitleSerializer(serialiser.ModelSerializer):
     rating = serializer.SerializerMethodField()
     genre = GenreSerializer(required=False, many=True)
-    category = CategorySerializer(required=False, many=True)
+    category = CategorySerializer(required=False)
     
     class Meta:
         fields = ('id', 'name', 'year', 'rating', 'description', 'genre', 'category')
         model = Title
     
     def get_rating(self, instance):
-        return 1.0
+        return instance.
     
 
 class ReviewSerializer(serializers.ModelSerializer):
