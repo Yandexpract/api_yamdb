@@ -1,4 +1,4 @@
-from django.core.validators import MaxLengthValidator, RegexValidator
+from django.core.validators import MinLengthValidator, RegexValidator
 
 from reviews.models import Category, Review, Comment, Genre, Title
 from rest_framework import serializers
@@ -24,7 +24,7 @@ class AuthSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         required=True, max_length=150,
         validators=(
-            MaxLengthValidator(150),
+            MinLengthValidator(3),
             RegexValidator(r'^[\w.@+-]+\Z'),
             validate_username,))
 
