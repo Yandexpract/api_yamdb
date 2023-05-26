@@ -4,11 +4,13 @@ from django.contrib.auth.tokens import default_token_generator
 from rest_framework.response import Response
 from rest_framework import permissions, status
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import AccessToken
 from django.conf import settings
 
 from users.models import User
 from .serializers import (AuthSerializer, GetTokenSerializer)
-from .permissions import (IsAuthorOrReadOnly)
+from .permissions import (UsersPermission, IsAdminOrReadOnly,
+                          IsAuthorOrModerator)
 
 
 class SignUpView(APIView):
@@ -31,5 +33,17 @@ class SignUpView(APIView):
 class TokenView(APIView):
     permission_classes = (permissions.AllowAny)
 
-    def post(self, request):
+    def token(self, request):
         serializer = GetTokenSerializer(data=request.data)
+        if serializer.is_valid():
+            user = get_object_or_404(
+                User, username=request.data.get('username'))
+            if not default_token_generator.check_token(
+                user, request.data.get('confirmation_code')
+            ):
+                return Response(
+                    'Неверный код подтверждения',
+                    status=status.HTTP_400_BAD_REQUEST)
+            token = {'token': str(AccessToken.for_user(user))}
+            return Response(token, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

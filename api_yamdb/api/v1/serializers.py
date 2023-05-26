@@ -1,4 +1,4 @@
-from django.core.validators import MaxLengthValidator, RegexValidator
+from django.core.validators import MinLengthValidator, RegexValidator
 
 from rest_framework import serializers
 from users.models import User
@@ -23,7 +23,7 @@ class AuthSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         required=True, max_length=150,
         validators=(
-            MaxLengthValidator(150),
+            MinLengthValidator(3),
             RegexValidator(r'^[\w.@+-]+\Z'),
             validate_username,))
 
