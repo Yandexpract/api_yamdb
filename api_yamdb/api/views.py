@@ -1,6 +1,9 @@
-from rest_framework import viewsets, permissions
-from .serializers import CategorySerializer, GenreSerializer, TitleSerializer, ReviewSerializer, CommentSerializer
-from reviews.models import Category, Genre, Title, Review, Comment
+from rest_framework import permissions, viewsets
+from reviews.models import Category, Comment, Genre, Review, Title
+
+from .serializers import (CategorySerializer, CommentSerializer,
+                          GenreSerializer, ReviewSerializer, TitleSerializer)
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
