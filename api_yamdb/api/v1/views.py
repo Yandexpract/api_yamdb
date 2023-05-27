@@ -2,13 +2,14 @@ from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.response import Response
-from rest_framework import permissions, status
+from rest_framework import permissions, status, viewsets
 from rest_framework.views import APIView
+from rest_framework.decorators import action
 from rest_framework_simplejwt.tokens import AccessToken
 from django.conf import settings
 
 from users.models import User
-from .serializers import (AuthSerializer, GetTokenSerializer)
+from .serializers import (AuthSerializer, GetTokenSerializer, UserSerializer)
 from .permissions import (UsersPermission, IsAdminOrReadOnly,
                           IsAuthorOrModerator)
 
@@ -47,3 +48,19 @@ class TokenView(APIView):
             token = {'token': str(AccessToken.for_user(user))}
             return Response(token, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    class UsersViewSet(viewsets.ModelViewSet):
+        queryset = User.objects.all()
+        serializer_class = UserSerializer
+        permission_classes = [UsersPermission]
+        lookup_field = 'username'
+
+        @action(
+            methods=['GET', 'PATCH'], detail=False, url_path='me',
+            permission_classes=(permissions.IsAuthenticated,)
+        )
+        def get_patch_me(self, request):
+            user = request.user
+            if request.method == 'GET':
+                serializer = self.get_serializer(user)
+                return Response(serializer.data, status=status.HTTP_200_OK)
