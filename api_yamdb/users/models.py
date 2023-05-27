@@ -3,13 +3,13 @@ from django.db import models
 
 
 class User(AbstractUser):
-    ROLE_USER = 'user'
-    ROLE_MODERATOR = 'moderator'
-    ROLE_ADMIN = 'admin'
+    USER = 'user'
+    MODERATOR = 'moderator'
+    ADMIN = 'admin'
     ROLE_CHOICES = (
-        (ROLE_USER, 'user'),
-        (ROLE_MODERATOR, 'moderator'),
-        (ROLE_ADMIN, 'admin'))
+        (USER, 'user'),
+        (MODERATOR, 'moderator'),
+        (ADMIN, 'admin'))
 
     username = models.TextField(
         max_length=150,
@@ -29,7 +29,7 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        return (self.role == self.ROLE_ADMIN
+        return (self.role == self.ADMIN
                 or self.is_superuser
                 or self.is_staff)
 

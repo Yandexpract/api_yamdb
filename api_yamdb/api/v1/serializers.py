@@ -5,6 +5,7 @@ from users.models import User
 from users.validators import validate_email, validate_username
 from rest_framework.pagination import PageNumberPagination
 
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('first_name', 'last_name', 'username',
@@ -86,6 +87,20 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ('id', 'text', 'author', 'score', 'pub_date')
         model = Review
         read_only_fields = ('id', 'author', 'pub_date')
+        
+        def validate(self, data):
+            if self.context['request'].method != 'POST':
+                return data
+            user = self.context['request'].user
+            title_id = (
+                self.context['request'].parser_context['kwargs']['title_id']
+            )
+            if Review.objects.filter(author=user, title__id=title_id).exists():
+                raise serializers.ValidationError(
+                    "Вы уже оставили отзыв на данное произведение")
+            return data
+        
+
 
 
 class CommentSerializer(serializers.ModelSerializer):
