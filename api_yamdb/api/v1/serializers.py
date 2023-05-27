@@ -1,9 +1,10 @@
 from django.core.validators import MinLengthValidator, RegexValidator
+from django.db.models import Avg
 from rest_framework import serializers
+from rest_framework.pagination import PageNumberPagination
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 from users.validators import validate_email, validate_username
-from rest_framework.pagination import PageNumberPagination
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -44,13 +45,15 @@ class GetTokenSerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     pagination_class = PageNumberPagination
+
     class Meta:
-        fields = ('name', 'slug') 
+        fields = ('name', 'slug')
         model = Category
 
 
 class GenreSerializer(serializers.ModelSerializer):
     pagination_class = PageNumberPagination
+
     class Meta:
         fields = ('name', 'slug')
         model = Genre
@@ -61,7 +64,7 @@ class TitleSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(required=False, many=True)
     category = CategorySerializer(required=False)
     pagination_class = PageNumberPagination
-    
+
     class Meta:
         fields = ('id',
                   'name',
@@ -73,7 +76,7 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
 
     def get_rating(self, instance):
-        return 1.0
+        return instance.reviews.aggregate(Avg('score'))['score__avg']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -87,20 +90,17 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ('id', 'text', 'author', 'score', 'pub_date')
         model = Review
         read_only_fields = ('id', 'author', 'pub_date')
-        
-        def validate(self, data):
-            if self.context['request'].method != 'POST':
-                return data
-            user = self.context['request'].user
-            title_id = (
-                self.context['request'].parser_context['kwargs']['title_id']
-            )
-            if Review.objects.filter(author=user, title__id=title_id).exists():
-                raise serializers.ValidationError(
-                    "Вы уже оставили отзыв на данное произведение")
-            return data
-        
 
+    def validate(self, data):
+        if self.context['request'].method != 'POST':
+            return data
+        user = self.context['request'].user
+        title_id = (
+            self.context['request'].parser_context['kwargs']['title_id'])
+        if Review.objects.filter(author=user, title_id=title_id).exists():
+            raise serializers.ValidationError(
+                "Вы уже оставили отзыв на данное произведение")
+        return data
 
 
 class CommentSerializer(serializers.ModelSerializer):

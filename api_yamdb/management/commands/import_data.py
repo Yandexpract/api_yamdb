@@ -1,7 +1,9 @@
 import csv
+
 from django.core.management.base import BaseCommand
 from django.utils.text import slugify
 from reviews.models import Category, Genre, Title
+
 
 class Command(BaseCommand):
     help = 'Imports data from CSV files into the database'

@@ -1,23 +1,25 @@
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, status, viewsets
+from rest_framework import permissions, serializers, status, viewsets
+from rest_framework.pagination import (LimitOffsetPagination,
+                                       PageNumberPagination)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
-from django.db.models import Avg
 
-from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 from .permissions import (IsAdminOrReadOnly, IsAuthorOrModerator,
-                          UsersPermission,)
+                          UsersPermission)
 from .serializers import (AuthSerializer, CategorySerializer,
                           CommentSerializer, GenreSerializer,
                           GetTokenSerializer, ReviewSerializer,
                           TitleSerializer, UserSerializer)
 
+
 class SignUpView(APIView):
     permission_classes = (permissions.AllowAny)
 
@@ -33,7 +35,8 @@ class SignUpView(APIView):
                       [request.data.get('email')])
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class SignUpView(APIView):
     permission_classes = (permissions.AllowAny)
 
@@ -49,10 +52,12 @@ class SignUpView(APIView):
                       [request.data.get('email')])
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
 
 class TokenView(APIView):
     permission_classes = (permissions.AllowAny)
@@ -73,29 +78,26 @@ class TokenView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
+                          IsAdminOrReadOnly]
     pagination_class = PageNumberPagination
 
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
+                          IsAdminOrReadOnly]
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.annotate(
-        rating=Avg('reviews__score')
-    ).all()
+    queryset = Title.objects.all()
     serializer_class = TitleSerializer
     pagination_class = PageNumberPagination
-    permission_classes = [IsAuthorOrModerator]
-
-
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -105,13 +107,18 @@ class ReviewViewSet(viewsets.ModelViewSet):
                           permissions.IsAuthenticatedOrReadOnly]
     pagination_class = PageNumberPagination
 
+    def get_title(self):
+        title_id = self.kwargs.get('title_id')
+        return get_object_or_404(Title, pk=title_id)
+
     def get_queryset(self):
-        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
-        return title.reviews.all()
+        return self.get_title().reviews.all()
 
     def perform_create(self, serializer):
-        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        serializer.save(author=self.request.user, title=title)
+        serializer.save(
+            author=self.request.user,
+            title=self.get_title()
+        )
 
 
 class CommentViewSet(viewsets.ModelViewSet):
