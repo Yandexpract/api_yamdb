@@ -16,7 +16,7 @@ from .permissions import (UsersPermission, IsAdminOrReadOnly,
 
 
 class SignUpView(APIView):
-    permission_classes = (permissions.AllowAny)
+    permission_classes = (permissions.AllowAny,)
 
     def send_confirmation_code(request):
         serializer = AuthSerializer(data=request.data)
@@ -30,10 +30,6 @@ class SignUpView(APIView):
                       [request.data.get('email')])
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class SignUpView(APIView):
-    permission_classes = (permissions.AllowAny,)
 
 
 class UsersViewSet(viewsets.ModelViewSet):
@@ -51,6 +47,10 @@ class UsersViewSet(viewsets.ModelViewSet):
         if request.method == 'GET':
             serializer = self.get_serializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(role=user.role, partial=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TokenView(APIView):
