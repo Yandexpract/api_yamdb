@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (CategoryViewSet, CommentViewSet, GenreViewSet,
                     ReviewViewSet, SignUpView, TitleViewSet, TokenView,
-                    UsersViewSet)
+                    UsersViewSet, UsersViewSet)
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='categories')
@@ -24,6 +24,6 @@ router.register(
 
 urlpatterns = [
     path('', include(router.urls)),
-    # path('users/me/', UserUpdateView.as_view(), name='user-update'),
+    #path('users/me/', UsersViewSet.as_view(), name='user-update'),
     path('auth/signup/', SignUpView.as_view()),
     path('auth/token/', TokenView.as_view()), ]
