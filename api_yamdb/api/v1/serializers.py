@@ -1,7 +1,7 @@
 from django.core.validators import MinLengthValidator, RegexValidator
 from django.db.models import Avg
 from rest_framework import serializers
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 from users.validators import validate_email, validate_username
@@ -52,7 +52,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    pagination_class = PageNumberPagination
+    pagination_class = LimitOffsetPagination
 
     class Meta:
         fields = ('name', 'slug')
