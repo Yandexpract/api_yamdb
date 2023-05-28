@@ -4,11 +4,15 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 from django.db.models import Avg
+from .serializers import (AuthSerializer, GetTokenSerializer, UserSerializer)
+from .permissions import (UsersPermission, IsAdminOrReadOnly,
+                          IsAuthorOrModerator)
 
 
 class SignUpView(APIView):
@@ -26,15 +30,16 @@ class SignUpView(APIView):
                       [request.data.get('email')])
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class SignUpView(APIView):
-    permission_classes = (permissions.AllowAny)
+    permission_classes = (permissions.AllowAny,)
 
 
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [UsersPermission]
+    permission_classes = (UsersPermission,)
     lookup_field = 'username'
 
     @action(
@@ -47,8 +52,9 @@ class UsersViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class TokenView(APIView):
-    permission_classes = (permissions.AllowAny)
+    permission_classes = (permissions.AllowAny,)
 
     def token(self, request):
         serializer = GetTokenSerializer(data=request.data)
@@ -66,18 +72,17 @@ class TokenView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = (IsAdminOrReadOnly,)
     pagination_class = PageNumberPagination
 
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -86,16 +91,15 @@ class TitleViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = TitleSerializer
     pagination_class = PageNumberPagination
-    permission_classes = [IsAuthorOrModerator]
-
-
+    permission_classes = (IsAuthorOrModerator,
+                          permissions.IsAuthenticatedOrReadOnly,)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = [IsAuthorOrModerator,
-                          permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = (IsAuthorOrModerator,
+                          permissions.IsAuthenticatedOrReadOnly,)
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
@@ -111,8 +115,8 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthorOrModerator,
-                          permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = (IsAuthorOrModerator,
+                          permissions.IsAuthenticatedOrReadOnly,)
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
