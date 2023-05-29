@@ -33,7 +33,6 @@ class SignUpView(APIView):
             return Response(request.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -64,19 +63,22 @@ class TokenView(TokenObtainPairView):
     serializer_class = GetTokenSerializer
 
 
+
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminOrReadOnly,
-                          permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          IsAdminOrReadOnly,
+                          )
     pagination_class = PageNumberPagination
 
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminOrReadOnly,
-                          permissions.IsAuthenticatedOrReadOnly,)
+    pagination_class = PageNumberPagination
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          IsAdminOrReadOnly,)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -85,8 +87,8 @@ class TitleViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = TitleSerializer
     pagination_class = PageNumberPagination
-    permission_classes = (IsAdminOrReadOnly,
-                          permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          IsAdminOrReadOnly,)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

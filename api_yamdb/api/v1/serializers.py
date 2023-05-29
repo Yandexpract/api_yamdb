@@ -6,7 +6,7 @@ from users.models import User
 from users.validators import validate_email, validate_username
 from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.tokens import AccessToken
-
+from django.db.models import Avg
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,20 +22,20 @@ class UsersMeSerializer(UserSerializer):
         required=True, max_length=150,
         validators=(
             MinLengthValidator(3),
-            RegexValidator(r'^[\w.@+-]+\Z'),))
+            RegexValidator(r'^[\w.+-]+\Z'),))
 
 
 class SignupSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         required=True,
         max_length=254,
-        validators=(RegexValidator(r'^[\w.+-]+\Z'),
+        validators=(RegexValidator(r'^[\w.@+-]+\Z'),
                     validate_email))
 
     username = serializers.CharField(
         required=True, max_length=150,
         validators=(
-            RegexValidator(r'^[\w.@+-]+\Z'),
+            RegexValidator(r'^[\w.+-]+\Z'),
             validate_username,))
 
     def validate_username(self, value):
