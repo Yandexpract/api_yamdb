@@ -95,8 +95,8 @@ class TitleViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = TitleSerializer
     pagination_class = PageNumberPagination
-    permission_classes = (IsAuthorOrModerator,
-                          permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          IsAdminOrReadOnly,)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

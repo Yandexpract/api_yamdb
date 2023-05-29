@@ -4,7 +4,7 @@ from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 from users.validators import validate_email, validate_username
 from rest_framework.pagination import PageNumberPagination
-
+from django.db.models import Avg
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -58,8 +58,8 @@ class GenreSerializer(serializers.ModelSerializer):
 
 class TitleSerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField()
-    genre = GenreSerializer(required=False, many=True)
-    category = CategorySerializer(required=False)
+    genre = GenreSerializer(many=True)
+    category = CategorySerializer(many=True)
     pagination_class = PageNumberPagination
     
     class Meta:
@@ -73,7 +73,7 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
 
     def get_rating(self, instance):
-        return 1.0
+        return instance.reviews.aggregate(Avg('score'))['score__avg']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
