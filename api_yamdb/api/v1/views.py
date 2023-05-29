@@ -1,6 +1,3 @@
-from django.conf import settings
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
@@ -12,29 +9,24 @@ from users.models import User
 from django.db.models import Avg
 
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
-from .permissions import (IsAdminOrReadOnly, IsAuthorOrModerator,
-                          UsersPermission,)
-from .serializers import (SignupSerializer, CategorySerializer,
-                          CommentSerializer, GenreSerializer,
-                          GetTokenSerializer, ReviewSerializer,
-                          TitleSerializer, UserSerializer,
-                          UsersMeSerializer)
+from api.v1.utils import send_confirmation_code
+from api.v1.permissions import (IsAdminOrReadOnly, IsAuthorOrModerator,
+                                UsersPermission,)
+from api.v1.serializers import (SignupSerializer, CategorySerializer,
+                                CommentSerializer, GenreSerializer,
+                                GetTokenSerializer, ReviewSerializer,
+                                TitleSerializer, UserSerializer,
+                                UsersMeSerializer)
 
 
 class SignUpView(APIView):
     permission_classes = (permissions.AllowAny,)
 
-    def send_confirmation_code(request):
+    def post(self, request):
         serializer = SignupSerializer(data=request.data)
         if serializer.is_valid():
-            user = User.objects.get(
-                username=request.data.get('username'),
-                email=request.data.get('email'))
-            confirmation_code = default_token_generator.make_token(user)
-            send_mail(f'Ваш код подтверждения - {confirmation_code}',
-                      settings.SEND_EMAIL,
-                      [request.data.get('email')])
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            send_confirmation_code(request)
+            return Response(request.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -71,14 +63,16 @@ class TokenView(TokenObtainPairView):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,
+                          permissions.IsAuthenticatedOrReadOnly,)
     pagination_class = PageNumberPagination
 
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,
+                          permissions.IsAuthenticatedOrReadOnly,)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -87,7 +81,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = TitleSerializer
     pagination_class = PageNumberPagination
-    permission_classes = (IsAuthorOrModerator,
+    permission_classes = (IsAdminOrReadOnly,
                           permissions.IsAuthenticatedOrReadOnly,)
 
 

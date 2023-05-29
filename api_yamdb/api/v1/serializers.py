@@ -18,6 +18,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UsersMeSerializer(UserSerializer):
     role = serializers.CharField(read_only=True)
+    username = serializers.CharField(
+        required=True, max_length=150,
+        validators=(
+            MinLengthValidator(3),
+            RegexValidator(r'^[\w.@+-]+\Z'),))
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -30,7 +35,6 @@ class SignupSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         required=True, max_length=150,
         validators=(
-            MinLengthValidator(3),
             RegexValidator(r'^[\w.@+-]+\Z'),
             validate_username,))
 
