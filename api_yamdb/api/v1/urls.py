@@ -1,12 +1,13 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import include, path
-from .views import (SignUpView, TokenView, UsersViewSet, CommentViewSet,
-                    ReviewViewSet, GenreViewSet, TitleViewSet, CategoryViewSet)
+from .views import (SignUpView, TokenView, UsersViewSet, UsersMeView,
+                    CommentViewSet, ReviewViewSet, GenreViewSet,
+                    TitleViewSet, CategoryViewSet)
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
 router.register(r'genres', GenreViewSet)
 router.register(r'titles', TitleViewSet)
-router.register(r'users', UsersViewSet)
+router.register(r'users', UsersViewSet, basename='user')
 
 router.register(
     r'titles/(?P<title_id>\d+)/reviews',
@@ -20,8 +21,8 @@ router.register(
 )
 
 urlpatterns = [
+    path('auth/token/', TokenView.as_view(), name='create_token'),
+    path('auth/signup/', SignUpView.as_view(), name='signup'),
+    path('users/me/', UsersMeView.as_view(), name='me'),
     path('', include(router.urls)),
-    # path('users/me/', UserUpdateView.as_view(), name='user-update'),
-    path('auth/signup/', SignUpView.as_view()),
-    path('auth/token/', TokenView.as_view()),
 ]

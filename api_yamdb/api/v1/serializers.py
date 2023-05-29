@@ -1,10 +1,12 @@
+from django.shortcuts import get_object_or_404
 from django.core.validators import MinLengthValidator, RegexValidator
 from rest_framework import serializers
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 from users.validators import validate_email, validate_username
 from rest_framework.pagination import PageNumberPagination
-from django.db.models import Avg
+from rest_framework_simplejwt.tokens import AccessToken
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,7 +16,16 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_field = ('role')
 
 
-class AuthSerializer(serializers.ModelSerializer):
+class UsersMeSerializer(UserSerializer):
+    role = serializers.CharField(read_only=True)
+    username = serializers.CharField(
+        required=True, max_length=150,
+        validators=(
+            MinLengthValidator(3),
+            RegexValidator(r'^[\w.@+-]+\Z'),))
+
+
+class SignupSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         required=True,
         max_length=254,
@@ -24,9 +35,15 @@ class AuthSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         required=True, max_length=150,
         validators=(
-            MinLengthValidator(3),
             RegexValidator(r'^[\w.@+-]+\Z'),
             validate_username,))
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError(
+                'Не корректное имя пользователя.',
+            )
+        return value
 
     class Meta:
         model = User
@@ -37,6 +54,12 @@ class GetTokenSerializer(serializers.ModelSerializer):
     username = serializers.CharField()
     confirmation_code = serializers.CharField()
 
+    def validate(self, data):
+        user = get_object_or_404(User, username=data.get('username'))
+        if user.confirmation_code != data.get('confirmation_code'):
+            raise serializers.ValidationError('Не верный confirmation_code')
+        return {'access': str(AccessToken.for_user(user))}
+
     class Meta:
         model = User
         fields = ('username', 'confirmation_code')
@@ -44,13 +67,15 @@ class GetTokenSerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     pagination_class = PageNumberPagination
+
     class Meta:
-        fields = ('name', 'slug') 
+        fields = ('name', 'slug')
         model = Category
 
 
 class GenreSerializer(serializers.ModelSerializer):
     pagination_class = PageNumberPagination
+
     class Meta:
         fields = ('name', 'slug')
         model = Genre
@@ -58,10 +83,10 @@ class GenreSerializer(serializers.ModelSerializer):
 
 class TitleSerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField()
-    genre = GenreSerializer(many=True)
-    category = CategorySerializer(many=True)
+    genre = GenreSerializer(required=False, many=True)
+    category = CategorySerializer(required=False)
     pagination_class = PageNumberPagination
-    
+
     class Meta:
         fields = ('id',
                   'name',
@@ -87,7 +112,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ('id', 'text', 'author', 'score', 'pub_date')
         model = Review
         read_only_fields = ('id', 'author', 'pub_date')
-        
+
     def validate(self, data):
         if self.context['request'].method != 'POST':
             return data
@@ -97,8 +122,6 @@ class ReviewSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Вы уже оставили отзыв на данное произведение")
         return data
-        
-
 
 
 class CommentSerializer(serializers.ModelSerializer):
