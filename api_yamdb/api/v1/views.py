@@ -20,7 +20,7 @@ from .serializers import (AuthSerializer, CategorySerializer,
                           TitleSerializer, UserSerializer)
 
 class SignUpView(APIView):
-    permission_classes = (permissions.AllowAny)
+    permission_classes = (permissions.AllowAny,)
 
     def send_confirmation_code(request):
         serializer = AuthSerializer(data=request.data)
@@ -34,15 +34,12 @@ class SignUpView(APIView):
                       [request.data.get('email')])
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-class SignUpView(APIView):
-    permission_classes = (permissions.AllowAny)
 
 
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [UsersPermission]
+    permission_classes = (UsersPermission,)
     lookup_field = 'username'
 
     @action(
@@ -54,9 +51,14 @@ class UsersViewSet(viewsets.ModelViewSet):
         if request.method == 'GET':
             serializer = self.get_serializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(role=user.role, partial=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class TokenView(APIView):
-    permission_classes = (permissions.AllowAny)
+    permission_classes = (permissions.AllowAny,)
 
     def token(self, request):
         serializer = GetTokenSerializer(data=request.data)
@@ -74,18 +76,17 @@ class TokenView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = (IsAdminOrReadOnly,)
     pagination_class = PageNumberPagination
 
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -94,16 +95,15 @@ class TitleViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = TitleSerializer
     pagination_class = PageNumberPagination
-    permission_classes = [IsAuthorOrModerator]
-
-
+    permission_classes = (IsAuthorOrModerator,
+                          permissions.IsAuthenticatedOrReadOnly,)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = [IsAuthorOrModerator,
-                          permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = (IsAuthorOrModerator,
+                          permissions.IsAuthenticatedOrReadOnly,)
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
@@ -119,8 +119,8 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthorOrModerator,
-                          permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = (IsAuthorOrModerator,
+                          permissions.IsAuthenticatedOrReadOnly,)
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
