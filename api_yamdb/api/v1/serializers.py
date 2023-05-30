@@ -1,5 +1,4 @@
 from django.shortcuts import get_object_or_404
-from django.core.validators import MinLengthValidator, RegexValidator
 from rest_framework import serializers
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
@@ -9,41 +8,25 @@ from rest_framework_simplejwt.tokens import AccessToken
 from django.db.models import Avg
 
 class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ('first_name', 'last_name', 'username',
-                  'bio', 'email', 'role')
-        model = User
-        read_only_field = ('role')
-
-
-class UsersMeSerializer(UserSerializer):
-    role = serializers.CharField(read_only=True)
     username = serializers.CharField(
         required=True, max_length=150,
-        validators=(
-            MinLengthValidator(3),
-            RegexValidator(r'^[\w.+-]+\Z'),))
+        validators=[validate_username])
+
+    class Meta:
+        fields = ('email', 'username', 'first_name', 'last_name',
+                  'bio', 'role')
+        model = User
 
 
 class SignupSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         required=True,
         max_length=254,
-        validators=(RegexValidator(r'^[\w.@+-]+\Z'),
-                    validate_email))
+        validators=[validate_email])
 
     username = serializers.CharField(
         required=True, max_length=150,
-        validators=(
-            RegexValidator(r'^[\w.+-]+\Z'),
-            validate_username,))
-
-    def validate_username(self, value):
-        if value == 'me':
-            raise serializers.ValidationError(
-                'Не корректное имя пользователя.',
-            )
-        return value
+        validators=[validate_username])
 
     class Meta:
         model = User
@@ -58,11 +41,7 @@ class GetTokenSerializer(serializers.ModelSerializer):
         user = get_object_or_404(User, username=data.get('username'))
         if user.confirmation_code != data.get('confirmation_code'):
             raise serializers.ValidationError('Не верный confirmation_code')
-        return {'access': str(AccessToken.for_user(user))}
-
-    class Meta:
-        model = User
-        fields = ('username', 'confirmation_code')
+        return {'token': str(AccessToken.for_user(user))}
 
 
 class CategorySerializer(serializers.ModelSerializer):
