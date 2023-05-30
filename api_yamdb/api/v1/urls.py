@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import include, path
-from .views import (SignUpView, TokenView, UsersViewSet, UsersMeView,
+from .views import (SignUpView, TokenView, UsersViewSet,
                     CommentViewSet, ReviewViewSet, GenreViewSet,
                     TitleViewSet, CategoryViewSet)
 router = DefaultRouter()
@@ -24,5 +24,4 @@ urlpatterns = [
     path('', include(router.urls)),
     path('auth/token/', TokenView.as_view(), name='create_token'),
     path('auth/signup/', SignUpView.as_view(), name='signup'),
-    path('users/me/', UsersMeView.as_view(), name='me'),
 ]

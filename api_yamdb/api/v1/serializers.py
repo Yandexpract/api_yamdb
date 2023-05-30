@@ -1,5 +1,4 @@
 from django.shortcuts import get_object_or_404
-from django.core.validators import MinLengthValidator
 from rest_framework import serializers
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
@@ -17,13 +16,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('email', 'username', 'first_name', 'last_name',
                   'bio', 'role')
         model = User
-
-
-class UsersMeSerializer(UserSerializer):
-    role = serializers.CharField(read_only=True)
-    username = serializers.CharField(
-        required=True, max_length=150,
-        validators=[validate_username])
 
 
 class SignupSerializer(serializers.ModelSerializer):

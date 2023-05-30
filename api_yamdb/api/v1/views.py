@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework import permissions, status, viewsets, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -11,12 +12,11 @@ from django.db.models import Avg
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 from api.v1.utils import send_confirmation_code
 from api.v1.permissions import (IsAdminOrReadOnly, IsAuthorOrModerator,
-                                UsersPermission,)
+                                UsersPermission)
 from api.v1.serializers import (SignupSerializer, CategorySerializer,
                                 CommentSerializer, GenreSerializer,
                                 GetTokenSerializer, ReviewSerializer,
-                                TitleSerializer, UserSerializer,
-                                UsersMeSerializer)
+                                TitleSerializer, UserSerializer)
 
 
 class SignUpView(APIView):
@@ -37,26 +37,29 @@ class SignUpView(APIView):
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (UsersPermission, permissions.IsAuthenticated,)
     lookup_field = 'username'
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('username',)
+    permission_classes = (UsersPermission,)
+    pagination_class = LimitOffsetPagination
 
-
-class UsersMeView(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
-
-    def get(self, request):
-        """Метод GET."""
-        me = get_object_or_404(User, username=request.user.username)
-        serializer = UserSerializer(me)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def patch(self, request):
-        """Метод PATCH."""
-        me = get_object_or_404(User, username=request.user.username)
-        serializer = UsersMeSerializer(me, data=request.data, partial=True)
+    @action(
+        methods=['GET', 'PATCH'], detail=False, url_path='me',
+        permission_classes=(permissions.IsAuthenticated,))
+    def me(self, request):
+        user = request.user
+        if request.method == 'GET':
+            serializer = self.get_serializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(role=user.role, partial=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        if request.method == 'PUT':
+            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return super().update(request, *args, **kwargs)
 
 
 class TokenView(TokenObtainPairView):
@@ -68,7 +71,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (IsAdminOrReadOnly,
-                          permissions.IsAuthenticatedOrReadOnly,)
+                          permissions.IsAuthenticatedOrReadOnly)
     pagination_class = PageNumberPagination
 
 
@@ -76,7 +79,7 @@ class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (IsAdminOrReadOnly,
-                          permissions.IsAuthenticatedOrReadOnly,)
+                          permissions.IsAuthenticatedOrReadOnly)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -86,14 +89,14 @@ class TitleViewSet(viewsets.ModelViewSet):
     serializer_class = TitleSerializer
     pagination_class = PageNumberPagination
     permission_classes = (IsAdminOrReadOnly,
-                          permissions.IsAuthenticatedOrReadOnly,)
+                          permissions.IsAuthenticatedOrReadOnly)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     permission_classes = (IsAuthorOrModerator,
-                          permissions.IsAuthenticatedOrReadOnly,)
+                          permissions.IsAuthenticatedOrReadOnly)
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
@@ -110,7 +113,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = (IsAuthorOrModerator,
-                          permissions.IsAuthenticatedOrReadOnly,)
+                          permissions.IsAuthenticatedOrReadOnly)
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
