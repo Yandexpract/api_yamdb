@@ -1,8 +1,5 @@
-import re
-
 from django.shortcuts import get_object_or_404
-from django.core.validators import MinLengthValidator, RegexValidator
-from django.db import IntegrityError
+from django.core.validators import MinLengthValidator
 from rest_framework import serializers
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
@@ -12,6 +9,10 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 
 class UserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        required=True, max_length=150,
+        validators=[validate_username])
+
     class Meta:
         fields = ('email', 'username', 'first_name', 'last_name',
                   'bio', 'role')
@@ -22,19 +23,19 @@ class UsersMeSerializer(UserSerializer):
     role = serializers.CharField(read_only=True)
     username = serializers.CharField(
         required=True, max_length=150,
-        validators=(
-            MinLengthValidator(3),
-            RegexValidator(r'^[\w.@+-]+\Z'),))
+        validators=[validate_username])
 
 
 class SignupSerializer(serializers.ModelSerializer):
 
-    def validate_username(self, value):
-        if value == 'me':
-            raise serializers.ValidationError(
-                'me нельзя использовать в качестве имени',
-            )
-        return value
+    email = serializers.EmailField(
+        required=True,
+        max_length=254,
+        validators=[validate_email])
+
+    username = serializers.CharField(
+        required=True, max_length=150,
+        validators=[validate_username])
 
     class Meta:
         fields = ('email', 'username')
