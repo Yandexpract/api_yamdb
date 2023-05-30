@@ -7,6 +7,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.tokens import AccessToken
 from django.db.models import Avg
 
+
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         required=True, max_length=150,
@@ -33,7 +34,7 @@ class SignupSerializer(serializers.ModelSerializer):
         fields = ('email', 'username')
 
 
-class GetTokenSerializer(serializers.ModelSerializer):
+class GetTokenSerializer(serializers.Serializer):
     username = serializers.CharField()
     confirmation_code = serializers.CharField()
 
@@ -96,7 +97,8 @@ class ReviewSerializer(serializers.ModelSerializer):
         if self.context['request'].method != 'POST':
             return data
         user = self.context['request'].user
-        title_id = (self.context['request'].parser_context['kwargs']['title_id'])
+        title_id = (
+            self.context['request'].parser_context['kwargs']['title_id'])
         if Review.objects.filter(author=user, title__id=title_id).exists():
             raise serializers.ValidationError(
                 "Вы уже оставили отзыв на данное произведение")

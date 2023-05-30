@@ -7,12 +7,12 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
-from django.db.models import Avg
 
-from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
+from rest_framework.pagination import (PageNumberPagination,
+                                       LimitOffsetPagination,)
 from api.v1.utils import send_confirmation_code
 from api.v1.permissions import (IsAdminOrReadOnly, IsAuthorOrModerator,
-                                UsersPermission)
+                                UsersPermission, )
 from api.v1.serializers import (SignupSerializer, CategorySerializer,
                                 CommentSerializer, GenreSerializer,
                                 GetTokenSerializer, ReviewSerializer,
@@ -56,6 +56,11 @@ class UsersViewSet(viewsets.ModelViewSet):
         serializer.save(role=user.role, partial=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def update(self, request, *args, **kwargs):
+        if request.method == 'PUT':
+            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return super().update(request, *args, **kwargs)
+
 
 class TokenView(TokenObtainPairView):
 
@@ -69,20 +74,21 @@ class CategoryViewSet(viewsets.ModelViewSet):
                           IsAdminOrReadOnly,
                           )
     pagination_class = PageNumberPagination
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    lookup_field = 'slug'
 
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     pagination_class = PageNumberPagination
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+    permission_classes = (permissions.IsAuthenticated,
                           IsAdminOrReadOnly,)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.annotate(
-        rating=Avg('reviews__score')
-    ).all()
+    queryset = Title.objects.all()
     serializer_class = TitleSerializer
     pagination_class = PageNumberPagination
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,
