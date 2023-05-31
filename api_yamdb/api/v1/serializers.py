@@ -3,7 +3,6 @@ from rest_framework import serializers
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 from users.validators import validate_email, validate_username
-from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.tokens import AccessToken
 from django.db.models import Avg
 
@@ -46,7 +45,6 @@ class GetTokenSerializer(serializers.Serializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    pagination_class = PageNumberPagination
 
     class Meta:
         fields = ('name', 'slug')
@@ -54,20 +52,39 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    pagination_class = PageNumberPagination
 
     class Meta:
         fields = ('name', 'slug')
         model = Genre
 
 
+class TitleGetSerializer(serializers.ModelSerializer):
+    genre = serializers.SlugRelatedField(slug_field='slug',
+                                         queryset=Genre.objects.all(),
+                                         required=True,
+                                         many=True)
+    category = serializers.SlugRelatedField(slug_field='slug',
+                                            queryset=Category.objects.all(),
+                                            required=True)
+
+    class Meta:
+        model = Title
+        fields = ('id',
+                  'name',
+                  'year',
+                  'description',
+                  'genre',
+                  'category')
+
+
 class TitleSerializer(serializers.ModelSerializer):
+
     rating = serializers.SerializerMethodField()
     genre = GenreSerializer(required=False, many=True)
     category = CategorySerializer(required=False)
-    pagination_class = PageNumberPagination
 
     class Meta:
+        model = Title
         fields = ('id',
                   'name',
                   'year',
@@ -75,7 +92,6 @@ class TitleSerializer(serializers.ModelSerializer):
                   'description',
                   'genre',
                   'category')
-        model = Title
 
     def get_rating(self, instance):
         return instance.reviews.aggregate(Avg('score'))['score__avg']
