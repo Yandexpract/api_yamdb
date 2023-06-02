@@ -1,15 +1,12 @@
-from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+
 from users.models import User
 
 
 class Category(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, max_length=50)
-
-    """'''   def save(self, *args, **kwargs):
-        self.slug = slugify(self.name, instance=self)
-        super(Category, self).save(*args, **kwargs)'''"""
 
     def __str__(self):
         return self.name
@@ -18,10 +15,6 @@ class Category(models.Model):
 class Genre(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, max_length=50)
-
-    """    '''def save(self, *args, **kwargs):
-        self.slug = slugify(self.name, instance=self)
-        super(Genre, self).save(*args, **kwargs)'''"""
 
     def __str__(self):
         return self.name
@@ -58,8 +51,9 @@ class Review(models.Model):
     author = models.ForeignKey(User,
                                on_delete=models.CASCADE,
                                related_name='reviews',)
-    score = models.PositiveSmallIntegerField(validators=(MaxValueValidator(10),
-                                                         MinValueValidator(1)))
+    score = models.PositiveSmallIntegerField(
+        validators=(MaxValueValidator(10),
+                    MinValueValidator(1)))
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:

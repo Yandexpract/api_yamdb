@@ -1,7 +1,11 @@
 import csv
+
 from django.core.management.base import BaseCommand
-from reviews.models import Category, Genre, Title, Review, Comment
+
+from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
+
+CSV_DIR = './static/data'
 
 
 class Command(BaseCommand):
@@ -11,15 +15,16 @@ class Command(BaseCommand):
         self.run()
 
     def run(self):
-        # self.load_users()
+        self.load_users()
         self.load_categories()
         self.load_genres()
         self.load_titles()
-        # self.load_reviews()
-        # self.load_comments()
+        self.load_reviews()
+        self.load_comments()
+        self.load_title_genres()
 
     def load_categories(self):
-        with open('./static/data/category.csv',
+        with open(CSV_DIR + '/category.csv',
                   encoding='utf8',
                   newline='') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -30,7 +35,7 @@ class Command(BaseCommand):
                 category.save()
 
     def load_genres(self):
-        with open('./static/data/genre.csv',
+        with open(CSV_DIR + '/genre.csv',
                   encoding='utf8',
                   newline='') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -41,7 +46,7 @@ class Command(BaseCommand):
                 genre.save()
 
     def load_titles(self):
-        with open('./static/data/titles.csv',
+        with open(CSV_DIR + '/titles.csv',
                   encoding='utf8',
                   newline='') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -53,7 +58,7 @@ class Command(BaseCommand):
                 title.save()
 
     def load_reviews(self):
-        with open('./static/data/review.csv',
+        with open(CSV_DIR + '/review.csv',
                   encoding='utf8',
                   newline='') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -67,7 +72,7 @@ class Command(BaseCommand):
                 review.save()
 
     def load_comments(self):
-        with open('./static/data/comments.csv',
+        with open(CSV_DIR + '/comments.csv',
                   encoding='utf8',
                   newline='') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -80,7 +85,7 @@ class Command(BaseCommand):
                 comment.save()
 
     def load_users(self):
-        with open('./static/data/users.csv',
+        with open(CSV_DIR + '/users.csv',
                   encoding='utf8',
                   newline='') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -93,3 +98,16 @@ class Command(BaseCommand):
                             first_name=row['first_name'],
                             last_name=row['last_name'])
                 data.save()
+
+    def load_title_genres(self):
+        with open(CSV_DIR + '/genre_title.csv',
+                  encoding='utf8',
+                  newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+
+            for row in reader:
+                data = Title.genre.through.objects.get_or_create(
+                    id=row['id'],
+                    title_id=row['title_id'],
+                    genre_id=row['genre_id'],)
+                print(data)

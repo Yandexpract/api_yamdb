@@ -1,23 +1,24 @@
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, mixins, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework import permissions, status, viewsets, filters, mixins
+from rest_framework.pagination import (LimitOffsetPagination,
+                                       PageNumberPagination)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
+
+from api.v1.permissions import (IsAdminOrReadOnly, IsAuthorOrModerator,
+                                UsersPermission)
+from api.v1.serializers import (CategorySerializer, CommentSerializer,
+                                GenreSerializer, GetTokenSerializer,
+                                ReviewSerializer, SignupSerializer,
+                                TitleGetSerializer, TitleSerializer,
+                                UserSerializer)
+from api.v1.utils import send_confirmation_code
 from reviews.models import Category, Genre, Review, Title
 from users.models import User
-from django_filters.rest_framework import DjangoFilterBackend
 
-from rest_framework.pagination import (PageNumberPagination,
-                                       LimitOffsetPagination,)
-from api.v1.utils import send_confirmation_code
-from api.v1.permissions import (IsAdminOrReadOnly, IsAuthorOrModerator,
-                                UsersPermission, )
-from api.v1.serializers import (SignupSerializer, CategorySerializer,
-                                CommentSerializer, GenreSerializer,
-                                GetTokenSerializer, ReviewSerializer,
-                                TitleSerializer, UserSerializer,
-                                TitleGetSerializer)
 from .filters import TitleFilter
 
 

@@ -1,10 +1,11 @@
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+from rest_framework_simplejwt.tokens import AccessToken
+
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 from users.validators import validate_email, validate_username
-from rest_framework_simplejwt.tokens import AccessToken
-from django.db.models import Avg
 
 
 class UserSerializer(serializers.ModelSerializer):
