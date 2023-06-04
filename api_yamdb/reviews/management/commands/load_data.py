@@ -5,37 +5,43 @@ from django.core.management.base import BaseCommand
 from reviews.models import Category, Comment, Genre, Review, Title
 from users.models import User
 
-CSV_DIR = './static/data'
-
 
 class Command(BaseCommand):
     help = 'Loads data from CSV files into the database'
+    CSV_DIR = './static/data/'
+    CSV_FILES = {'category': Category,
+                 'genre': Genre,
+                 'users': User,
+                 'titles': Title,
+                 'review': Review,
+                 'comments': Comment,
+                 'genre_title': Title.genre.through}
 
     def handle(self, *args, **options):
         self.run()
 
     def run(self):
-        self.load_users()
+        #self.load_users()
         self.load_categories()
-        self.load_genres()
-        self.load_titles()
-        self.load_reviews()
-        self.load_comments()
-        self.load_title_genres()
+        #self.load_genres()
+        #self.load_titles()
+        #self.load_reviews()
+        #self.load_comments()
+        #self.load_title_genres()
 
     def load_categories(self):
-        with open(CSV_DIR + '/category.csv',
-                  encoding='utf8',
-                  newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                category = Category(id=row['id'],
-                                    name=row['name'],
-                                    slug=row['slug'],)
-                category.save()
+        for file, models in self.CSV_FILES.items():
+            model = models
+            with open(self.CSV_DIR + file + '.csv',
+                      encoding='utf8',
+                      newline='') as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    obj = model(**row)
+                    obj.save()
 
-    def load_genres(self):
-        with open(CSV_DIR + '/genre.csv',
+    '''def load_genres(self):
+        with open(self.CSV_DIR + '/genre.csv',
                   encoding='utf8',
                   newline='') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -110,4 +116,4 @@ class Command(BaseCommand):
                     id=row['id'],
                     title_id=row['title_id'],
                     genre_id=row['genre_id'],)
-                print(data)
+                print(data)'''
